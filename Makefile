@@ -86,7 +86,9 @@ format:
 	@if ! hash clang-format; then echo "clang-format is required to indent"; fi
 	clang-format -i sse2rvv.h tests/*.cpp tests/*.h
 
-.PHONY: clean check format
+.PHONY: clean check format all test build-test
+
+all: test
 
 clean:
 	$(RM) $(OBJS) $(EXEC) $(deps) sse2rvv.h.gch
