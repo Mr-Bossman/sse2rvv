@@ -13,23 +13,23 @@ else
 endif
 
 ifndef CROSS_COMPILE
-    processor := $(shell uname -m)
+	processor := $(shell uname -m)
 	ARCH_CFLAGS = -maes -mpclmul -mssse3 -msse4.2
 else # CROSS_COMPILE was set
-    CC = $(CROSS_COMPILE)gcc
-    CXX = $(CROSS_COMPILE)g++
-    CXXFLAGS += -static
-    LDFLAGS += -static
+	CC = $(CROSS_COMPILE)gcc
+	CXX = $(CROSS_COMPILE)g++
+	CXXFLAGS += -static
+	LDFLAGS += -static
 
-    check_riscv := $(shell echo | $(CROSS_COMPILE)cpp -dM - | grep " __riscv_xlen " | cut -c22-)
-    uname_result := $(shell uname -m)
+	check_riscv := $(shell echo | $(CROSS_COMPILE)cpp -dM - | grep " __riscv_xlen " | cut -c22-)
+	uname_result := $(shell uname -m)
 	ifeq ($(check_riscv),64)
 		processor = rv64
-    else ifeq ($(uname_result),rv64imafdc)
+	else ifeq ($(uname_result),rv64imafdc)
 		processor = rv64
-    else ifeq ($(check_riscv),32)
+	else ifeq ($(check_riscv),32)
 		processor = rv32
-    else ifeq ($(uname_result),rv32i)
+	else ifeq ($(uname_result),rv32i)
 		processor = rv32
 	else
 		$(error Unsupported cross-compiler)
@@ -54,11 +54,11 @@ endif
 CXXFLAGS += -Wall -Wcast-qual -I. $(ARCH_CFLAGS)
 LDFLAGS	+= -lm
 OBJS = \
-    tests/binding.o \
-    tests/common.o \
-    tests/debug_tools.o \
-    tests/impl.o \
-    tests/main.o
+	tests/binding.o \
+	tests/common.o \
+	tests/debug_tools.o \
+	tests/impl.o \
+	tests/main.o
 deps := $(OBJS:%.o=%.o.d)
 
 .SUFFIXES: .o .cpp
