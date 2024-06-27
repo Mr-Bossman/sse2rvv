@@ -12,33 +12,19 @@ else
 	DEFINED_FLAGS = -DENABLE_TEST_ALL
 endif
 
-ifndef CROSS_COMPILE
-	processor := $(shell uname -m)
-	ARCH_CFLAGS = -maes -mpclmul -mssse3 -msse4.2
-else # CROSS_COMPILE was set
-	CC = $(CROSS_COMPILE)gcc
-	CXX = $(CROSS_COMPILE)g++
-	CXXFLAGS += -static
-	LDFLAGS += -static
+CC = $(CROSS_COMPILE)gcc
+CXX = $(CROSS_COMPILE)g++
+CXXFLAGS += -static
+LDFLAGS += -static
 
+ifdef CROSS_COMPILE
 	check_riscv := $(shell echo | $(CROSS_COMPILE)cpp -dM - | grep " __riscv_xlen " | cut -c22-)
-	uname_result := $(shell uname -m)
 	ifeq ($(check_riscv),64)
-		processor = rv64
-	else ifeq ($(uname_result),rv64imafdc)
 		processor = rv64
 	else ifeq ($(check_riscv),32)
 		processor = rv32
-	else ifeq ($(uname_result),rv32i)
-		processor = rv32
 	else
 		$(error Unsupported cross-compiler)
-	endif
-
-	ifeq ($(processor),$(filter $(processor),i386 x86_64))
-		ARCH_CFLAGS = -maes -mpclmul -mssse3 -msse4.2
-	else
-		ARCH_CFLAGS = -march=$(processor)gcv_zba
 	endif
 
 	ifeq ($(SIMULATOR_TYPE), qemu)
@@ -49,6 +35,25 @@ else # CROSS_COMPILE was set
 		SIMULATOR_FLAGS = --isa=$(processor)gcv_zba
 		PROXY_KERNEL = pk
 	endif
+else
+	uname_result = $(shell uname -m)
+	ifeq ($(uname_result), riscv64)
+		processor = rv64
+	else ifeq ($(uname_result), riscv32)
+		processor = rv32
+	else ifeq ($(uname_result), i386)
+		processor = i386
+	else ifeq ($(uname_result), x86_64)
+		processor = x86_64
+	else
+		$(error Unsupported processor)
+	endif
+endif
+
+ifeq ($(processor),$(filter $(processor),rv32 rv64))
+	ARCH_CFLAGS = -march=$(processor)gcv_zba
+else ifeq ($(processor),$(filter $(processor),i386 x86_64))
+	ARCH_CFLAGS = -maes -mpclmul -mssse3 -msse4.2
 endif
 
 CXXFLAGS += -Wall -Wcast-qual -I. $(ARCH_CFLAGS)
@@ -75,6 +80,9 @@ test: build-test
 
 build-test: tests/main
 ifeq ($(processor),$(filter $(processor),rv32 rv64))
+ifeq ($(shell $(CROSS_COMPILE)gcc -v 2>&1 | awk 'END{print ($$3>="14.0.0")?"T":"F"}'),F)
+	$(warning "gcc version is lower than gcc-14, please use gcc-14 or newer")
+endif
 	$(CC) $(ARCH_CFLAGS) -c sse2rvv.h
 endif
 
